@@ -2,22 +2,26 @@ import React, { useState } from 'react';
 import { PHONICS_CATEGORIES } from './constants';
 import { analyzeWordWithGemini } from './services/gemini';
 import WordStage from './components/WordStage';
+import Login from './components/Login';
 import { WordAnalysis, PhonicsPattern } from './types';
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [selectedPattern, setSelectedPattern] = useState<PhonicsPattern | null>(PHONICS_CATEGORIES[0].patterns[0]);
   const [currentWord, setCurrentWord] = useState<WordAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [customInput, setCustomInput] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
 
-  // Initial load simulation
+  // Initial load simulation (only runs once after login theoretically, 
+  // but useEffect with empty deps runs on mount. We can trigger this after login if needed,
+  // or keep it simple. For now, we'll trigger a load when isLoggedIn becomes true)
   React.useEffect(() => {
-    if (selectedPattern) {
+    if (isLoggedIn && selectedPattern) {
       handleWordSelect(selectedPattern.examples[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLoggedIn]);
 
   const handleWordSelect = async (word: string) => {
     setIsLoading(true);
@@ -49,6 +53,10 @@ function App() {
       handleWordSelect(pattern.examples[0]);
     }
   };
+
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />;
+  }
 
   return (
     <div className="h-screen flex flex-col font-sans text-slate-800 bg-[#f8fafc] overflow-hidden">
@@ -85,6 +93,15 @@ function App() {
                 className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-full leading-5 bg-slate-50 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-sm transition-all shadow-sm"
               />
             </form>
+          </div>
+
+          <div className="hidden md:flex items-center">
+            <button 
+              onClick={() => setIsLoggedIn(false)}
+              className="text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </header>
